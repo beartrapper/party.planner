@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+  <head>
+    <title>Postcards.party</title>
+    <!-- <meta name="csrf-param" content="authenticity_token" /> -->
+    <!-- <meta name="csrf-token" content="4kykCPeRyI0xsD7YyM1ofl0QOzp28xUf3JSvpznwoRhBf9hsdVZbRd/HGuqLZ3kj6fPgjtSMhDuu/5yU+yAyfQ==" /> -->
+
+    <!-- Viewport meta -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="shortcut icon" type="image/png" href="/assets/logo.png" />
+    <link rel="apple-touch-icon" href="/assets/logo.png" />
+    <link href=https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css rel="stylesheet" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta
+      name="description"
+      content="Send a personalized photo postcard to anywhere in the world, from any device, starting at just $1.25!"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css?family=Nunito:400,700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      media="all"
+      href="assets/application-f16f470f0f76ac0cbf70ce40fb6e5b811265d1b1cdbadbf474745a6bc9a72c6a.css"
+    />
+    <script src="assets/application-6b7c403338787ac285f2da3aff22ee3f1f8cbc0ba1f31b13a73c06bc2d696685.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
+  </head>
+
+  <body>
+
+
+    <div class="loader" id="loader" >Almost there</div>
+    <div id="app" style="display: none;">
+      <div v-if="show_home">
+        <section class="hero is-fullheight bg-primary" id="create">
+          <div class="hero-body">
+            <div class="container">
+              <h2 class="title has-text-centered">
+                <img src="assets/logo.png" width="120" />
+              </h2>
+          
+              <div class="front-again">
+                <div
+                  class="front-photo-again"
+                  style="
+                    background-image: url('https://i.ibb.co/9TqT3Zh/de0de55b118f40fa2c30a9687efb5a6c.png');
+                  "
+                ></div>
+              </div>
+
+              <form
+                class="new_postcard csuom-padding"
+                id="new_postcard"
+                enctype="multipart/form-data"
+                action="https://smilepostcards.co/create?locale=en"
+                accept-charset="UTF-8"
+                data-remote="true"
+                method="post"
+              >
+                <input name="utf8" type="hidden" value="&#x2713;" />
+                <div class="columns">
+                  <div class="column">
+                    <div
+                      v-bind:class="[{ flip: flipped }, 'postcard_container']"
+                      v-on:click="flip_preview"
+                    >
+                      <div class="postcard_preview">
+                        <div class="front">
+                          <div
+                            class="front-photo"
+                            id="image-node"
+                            v-bind:style="{ 'background-image': `url(${preview_image})` }"
+                          ></div>
+                        </div>
+
+                        <div class="back" id="node">
+                          <div id="safe-area">
+                            <div class="message_container">
+                              <div class="message_text">{{ message }}</div>
+                            </div>
+                          </div>
+
+                          <div id="postcard_address">
+                            <ul>
+                              <li v-if="name !== ''">{{ name }}</li>
+                              <li v-if="address_1 !== ''">{{ address_1 }}</li>
+                              <li v-if="address_2 !== ''">{{ address_2 }}</li>
+                              <li v-if="computed_city !== ''">
+                                {{ computed_city }}
+                              </li>
+                              <li v-if="country !== ''">{{ country }}</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="column is-5">
+                    <input
+                      v-model="cropped"
+                      type="hidden"
+                      name="postcard[cropped_image]"
+                      id="postcard_cropped_image"
+                    />
+                    <fieldset>
+                      <legend class="text-white">Image</legend>
+                      <div class="field">
+                        <div class="file is-white">
+                          <label class="file-label">
+                            <input
+                              accept="image/jpg, image/jpeg, image/png"
+                              class="file-input"
+                              v-on:change="onFileChange"
+                              type="file"
+                              name="postcard[temp_image]"
+                              id="postcard_temp_image"
+                              onchange="SendPostCard()"
+                            />
+                            <span class="file-cta">
+                              <span class="file-label">
+                                Upload a photo
+                              </span>
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    </fieldset>
+                  
+                    <fieldset>
+                      <legend class="text-white">Recipient</legend>
+
+                      <div class="field">
+                        <div class="control">
+                          <input
+                            class="input"
+                            placeholder="Full name"
+                            required="required"
+                            v-model="name"
+                            type="text"
+                            name="postcard[recipients_attributes][0][name]"
+                            id="postcard_recipients_attributes_0_name"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="columns marginless">
+                        <div class="column">
+                          <div class="field">
+                            <div class="control">
+                              <input
+                                class="input"
+                                placeholder="Address 1"
+                                required="required"
+                                v-model="address_1"
+                                type="text"
+                                name="postcard[recipients_attributes][0][address_1]"
+                                id="postcard_recipients_attributes_0_address_1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div class="column">
+                          <div class="field">
+                            <div class="control">
+                              <input
+                                class="input"
+                                placeholder="Address 2"
+                                v-model="address_2"
+                                type="text"
+                                name="postcard[recipients_attributes][0][address_2]"
+                                id="postcard_recipients_attributes_0_address_2"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="columns marginless">
+                        <div class="column">
+                          <div class="field">
+                            <div class="control">
+                              <input
+                                class="input"
+                                placeholder="City"
+                                v-model="city"
+                                type="text"
+                                name="postcard[recipients_attributes][0][city]"
+                                id="postcard_recipients_attributes_0_city"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div class="column">
+                          <div class="field">
+                            <div class="control">
+                              <input
+                                class="input"
+                                placeholder="State"
+                                v-model="state"
+                                type="text"
+                                name="postcard[recipients_attributes][0][state]"
+                                id="postcard_recipients_attributes_0_state"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div class="column">
+                          <div class="field">
+                            <div class="control">
+                              <input
+                                class="input"
+                                placeholder="Postcode"
+                                v-model="postcode"
+                                type="text"
+                                name="postcard[recipients_attributes][0][postcode]"
+                                id="postcard_recipients_attributes_0_postcode"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="field csutom-paddinsg">
+                        <div class="control">
+                          <div class="select is-fullwidth">
+                            <select
+                              v-model="country"
+                              name="postcard[recipients_attributes][0][country]"
+                              id="postcard_recipients_attributes_0_country"
+                              ><option value="">Select a country</option>
+                              <option value="US">United States</option>
+                           
+                              </select
+                            >
+                            <p class="help text-white text-right">
+                              We only support US deliveries for now
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </fieldset>
+                    <fieldset>
+                      <!-- <legend class="text-white" style="z-index: 124234134 !important;">Postcard</legend> -->
+
+                      <div class="field">
+                        <div class="control">
+                          <textarea
+                            class="textarea"
+                            placeholder="Your message"
+                            v-model="message"
+                            v-bind:maxlength="300"
+                            name="postcard[message]"
+                            id="postcard_message"
+                          ></textarea>
+                        </div>
+                        <p class="help text-white">
+                          {{ charactersRemaining }} chars left. Note: We DO NOT
+                          support emojis.
+                        </p>
+                      </div>
+                    </fieldset>
+
+                    <p class="help is-danger" id="error-message"></p>
+                  </div>
+                </div>
+                <!-- <div class="columns is-centered">
+            <div class="column is-4">
+              <button name="button" type="submit" class="button is-primary is-medium is-uppercase is-fullwidth bg-primary-again" data-disable-with="Submitting..." id="basic-photo-button">{{ submit_button }}</button>
+            </div>
+          </div> -->
+              </form>
+              <div class="row">
+              <div class="offset-2 col-5">
+                  <!-- <button name="button" type="submit" class="button is-primary is-medium is-uppercase is-fullwidth bg-primary-again" data-disable-with="Submitting..." id="basic-photo-button">{{ submit_button }}</button> -->
+                  <button
+                    name="button"
+                    class="is-uppercase new-buttom-custom"
+                    id="basic-photo-button"
+                  >
+                    <b> Send without Watermark <span class="text-success">(2.0$)</span>  </b>
+                  </button>
+            </div>
+          <div class="col-5">
+          <button
+          name="button"
+          class="is-uppercase new-buttom-custom"
+          id="basic-photo-button-with-mark"
+        >
+        <b> Send with Watermark <span class="text-success">(1.50$)</span></b>
+      </button>
+          </div>
+
+          </div>
+       
+        </section>
+        <!-- <div class="alert alert-danger text-center">
+          Apologies but currently we don't ship outside the US.
+        </div> -->
+
+        <section class="hero is-white is-medium" id="description">
+          <div class="hero-body">
+            <div class="container">
+              <h2 class="title has-text-centered">How it&#39;s done</h2>
+
+              <div class="columns">
+                <div class="column">
+                  <img
+                    class="hiw"
+                    src="assets/step1-69fa5bc56309bfe55550078f55f903807772558ecad365e4573a634106d89850.png"
+                  />
+                  <h3 class="is-size-5 has-text-weight-semibold">
+                    Step 1: Create
+                  </h3>
+                  <p class="has-text-grey-dark">
+                    Create your SmilePostcard in 30 seconds. Simply upload your
+                    photo, enter your message and recipient&#39;s address.
+                  </p>
+                </div>
+                <div class="column">
+                  <img
+                    class="hiw has-border"
+                    src="assets/step2-7696b69e98693be16d552bcccc30dbd51ec4ab57c9becddb0390c98475e3933e.png"
+                  />
+                  <h3 class="is-size-5 has-text-weight-semibold">
+                    Step 2: Pay
+                  </h3>
+                  <p class="has-text-grey-dark">
+                    Pay on a secure payment page with any credit/debit card. The
+                    cost includes everything, printing &amp; shipping.
+                  </p>
+                </div>
+                <div class="column">
+                  <img
+                    class="hiw"
+                    src="assets/step3-8ce65a4851247da48db8db7d6aabc8016115722f2e61adbf2b714fe9ed1a774c.png"
+                  />
+                  <h3 class="is-size-5 has-text-weight-semibold">
+                    Step 3: Send
+                  </h3>
+                  <p class="has-text-grey-dark">
+                    Your postcard is immediately printed and sent anywhere in
+                    the world within 1 week.
+                  </p>
+                </div>
+              </div>
+
+           </div>
+          </div>
+        </section>
+
+        <section class="hero is-medium bg-primary" id="example">
+          <div class="hero-body">
+            <div class="container">
+              <h2 class="title has-text-centered text-white">Live example</h2>
+
+              <div class="columns is-centered">
+                <div class="column is-8">
+                  <div
+                    v-bind:class="[{ flip: example_flipped }, 'postcard_container']"
+                    v-on:click="flip_example_preview"
+                  >
+                    <div class="postcard_preview">
+                      <div class="front">
+                        <div
+                          class="front-photo"
+                          style="
+                            background-image: url('assets/birthday-76df2b0bfd0ebf674b32ea73701c2007680f7cd800a1832e8ef9e72657550c15.jpg');
+                          "
+                        ></div>
+                      </div>
+
+                      <div class="back">
+                        <div id="safe-area">
+                          <div class="message_container">
+                            <div class="message_text">
+                              Dear Granny,<br />It's unfortunate you couldn't be
+                              here for my 2nd birthday but I know you were here
+                              with your ♥︎<br /><br />Thank you for being such a
+                              fantastic grandmother, lots of love XXX<br /><br />Your
+                              favourite nephew, Matthew
+                            </div>
+                          </div>
+
+                          <div class="credit_container is-hidden-mobile">
+                            <div class="credit">
+                              <p>Made with postcard.party</p>
+                              <p class="link">www.postcard.party</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div id="postcard_address">
+                          <ul>
+                            <li>Granny Fiona</li>
+                            <li>Flat 36</li>
+                            <li>12 Bernard Street</li>
+                            <li>Manchester, M91 5WQ</li>
+                            <li>United Kingdom</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="has-text-centered text-white">
+                    Click on the postcard to see the other side
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+   
+      <div
+        v-if="show_crop_modal"
+        v-bind:class="[{ show: show_crop_modal }, 'modal-mask']"
+      >
+        <div class="modal-wrapper">
+          <div class="modal-container">
+            <div class="modal-body">
+              <clipper-basic
+                class="my-clipper"
+                :src="photo"
+                bg-color="black"
+                :ratio="8.3/5.8"
+                :wrap-ratio="4/3"
+                ref="clipper"
+                :rotate="rotation"
+                :scale="scale"
+              ></clipper-basic>
+            </div>
+
+            <div class="modal-footer">
+              <div class="columns is-mobile">
+                <div class="column">
+                  <button class="button" v-on:click="show_crop_modal = false">
+                    Cancel
+                  </button>
+                </div>
+                <div class="column has-text-right">
+                  <button class="button is-primary" v-on:click="rotate">
+                    Rotate
+                  </button>
+                  <button v-on:click="crop" class="button is-primary">
+                    Crop
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script
+        data-cfasync="false"
+        src="cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"
+      ></script>
+
+      <script type="text/javascript">
+        var stripe = Stripe("pk_live_ELF1xcnNCogPkARxDDCnsfdB00irKVHv9t");
+
+        var app = new Vue({
+          el: "#app",
+          data: {
+            cropped: null,
+            rotation: 0,
+            scale: 1,
+            show_crop_modal: false,
+            show_home: true,
+            message: "",
+            name: "",
+            address_1: "",
+            address_2: "",
+            city: "",
+            state: "",
+            postcode: "",
+            country: "",
+            flipped: false,
+            example_flipped: false,
+            photo: null,
+            user_uploaded_photo: false,
+            price: "$1.25",
+            submit_button_label: "Confirm & Pay",
+            maxCharacters: 300,
+          },
+          methods: {
+            flip_preview: function (event) {
+              this.flipped = !this.flipped;
+            },
+            flip_example_preview: function () {
+              this.example_flipped = !this.example_flipped;
+            },
+            onFileChange: function (event) {
+              const file = event.target.files[0];
+              var reader = new FileReader();
+              reader.addEventListener(
+                "load",
+                function () {
+                  app.photo = app.cropped = reader.result;
+                  app.user_uploaded_photo = true;
+                  app.rotation = 0;
+                },
+                false
+              );
+              reader.readAsDataURL(file);
+            },
+            crop(event) {
+              const canvas = this.$refs.clipper.clip(); //call component's clip method
+              this.cropped = canvas.toDataURL("image/jpg", 1); //canvas->image
+              this.show_crop_modal = false;
+            },
+            rotate() {
+              this.rotation -= 90;
+            },
+          },
+          computed: {
+            computed_city: function () {
+              if (
+                this.postcode !== "" ||
+                this.city !== "" ||
+                this.state !== ""
+              ) {
+                return this.city + ", " + this.state + ", " + this.postcode;
+              } else {
+                return "";
+              }
+            },
+            computed_flip_back() {
+              return (
+                this.message,
+                this.name,
+                this.address_1,
+                this.address_2,
+                this.city,
+                this.state,
+                this.postcode,
+                this.country,
+                Date.now()
+              );
+            },
+            submit_button: function () {
+              var label = this.submit_button_label;
+              var eu_codes = [
+                "AT",
+                "BE",
+                "CY",
+                "EE",
+                "FI",
+                "FR",
+                "GE",
+                "GR",
+                "IE",
+                "IT",
+                "LV",
+                "LT",
+                "LU",
+                "MT",
+                "NL",
+                "PT",
+                "SK",
+                "SI",
+                "ES",
+              ];
+              if (this.country !== "") {
+                if (this.country == "GB") {
+                  this.price = "£1.29";
+                } else if (this.country == "US") {
+                  this.price = "$1.25";
+                } else if (eu_codes.includes(this.country)) {
+                  this.price = "€1.99";
+                } else {
+                  this.price = "$2.99";
+                }
+                label += " - " + this.price;
+              }
+              return label;
+            },
+            charactersRemaining: function () {
+              return this.maxCharacters - this.message.length;
+            },
+            preview_image() {
+              return this.user_uploaded_photo
+                ? this.cropped
+                : "https://smilepostcards.co/assets/placeholder-439896e81f78f7d96868a6bf46382c29887ebf6c21e5f180118cf3a4582feb78.jpg";
+            },
+          },
+          watch: {
+            computed_flip_back: function () {
+              this.flipped = true;
+            },
+            photo: function () {
+              this.flipped = false;
+            },
+          },
+        });
+      </script>
+    </div>
+
+    <!-- Start of Async Drift Code -->
+    <!-- <script>
+      "use strict";
+
+      !(function () {
+        var t = (window.driftt = window.drift = window.driftt || []);
+        if (!t.init) {
+          if (t.invoked)
+            return void (
+              window.console &&
+              console.error &&
+              console.error("Drift snippet included twice.")
+            );
+          (t.invoked = !0),
+            (t.methods = [
+              "identify",
+              "config",
+              "track",
+              "reset",
+              "debug",
+              "show",
+              "ping",
+              "page",
+              "hide",
+              "off",
+              "on",
+            ]),
+            (t.factory = function (e) {
+              return function () {
+                var n = Array.prototype.slice.call(arguments);
+                return n.unshift(e), t.push(n), t;
+              };
+            }),
+            t.methods.forEach(function (e) {
+              t[e] = t.factory(e);
+            }),
+            (t.load = function (t) {
+              var e = 3e5,
+                n = Math.ceil(new Date() / e) * e,
+                o = document.createElement("script");
+              (o.type = "text/javascript"),
+                (o.async = !0),
+                (o.crossorigin = "anonymous"),
+                (o.src =
+                  "https://js.driftt.com/include/" + n + "/" + t + ".js");
+              var i = document.getElementsByTagName("script")[0];
+              i.parentNode.insertBefore(o, i);
+            });
+        }
+      })();
+      drift.SNIPPET_VERSION = "0.3.1";
+      drift.load("94axexada7ck");
+    </script> -->
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"
+    ></script>
+    <script src="/assets/main.js"></script>
+    <script src="/assets/clicksend.js"></script>
+
+    <!--        -->
+    <!-- Stripe -->
+    <!--        -->
+    <script>
+      var PUBLISHABLE_KEY =
+        "pk_test_51HFPNlKgEEnLsFGdubOqVQmcSq0JLnfiusk6c3HZDyCBKMkj1v1RQ7moRyY87N6Sl7sAYUzFbtcXtZs9pHMlsrIw00bTN21lKW";
+      var DOMAIN = window.location.origin;
+
+      var PRICE_ID = "price_1HGotEKgEEnLsFGdCL3B22yh";
+      var PRICE_ID_WITHOUT_MARK = "price_1HGotEKgEEnLsFGd7u5ypuWP";
+
+      var basicPhotoButton = document.getElementById("basic-photo-button");
+      var basicPhotoButtonWithMark = document.getElementById("basic-photo-button-with-mark");
+
+      console.log("basic", basicPhotoButton);
+      var stripe = Stripe(PUBLISHABLE_KEY);
+
+      // Handle any errors from Checkout
+      var handleResult = function (result) {
+        if (result.error) {
+          console.log("result: ", result);
+          // var displayError = document.getElementById("error-message");
+          // displayError.textContent = result.error.message;
+        }
+      };
+
+      basicPhotoButtonWithMark.addEventListener("click", function () {
+        basicPhotoButtonWithMark.innerText = "Sending";
+        stripe
+          .redirectToCheckout({
+            mode: "payment",
+            lineItems: [
+              {
+                price: PRICE_ID,
+                quantity: 1,
+              },
+            ],
+            successUrl: DOMAIN,
+            cancelUrl: DOMAIN,
+          })
+          .then(handleResult);
+      });
+
+      basicPhotoButton.addEventListener("click", function () {
+        basicPhotoButton.innerText = "Sending";
+
+        stripe
+          .redirectToCheckout({
+            mode: "payment",
+            lineItems: [
+              {
+                price: PRICE_ID_WITHOUT_MARK,
+                quantity: 1,
+              },
+            ],
+            successUrl: DOMAIN,
+            cancelUrl: DOMAIN,
+          })
+          .then(handleResult);
+      });
+    </script>
+  <!-- loader script -->
+    <script >
+      //loadr to smooth things
+let loader = document.getElementById("loader");
+let appsode = document.getElementById("app");
+console.log("app", appsode)
+setTimeout(() => {
+   loader.style.display = "none";
+   appsode.style.display = "block";
+}, 1500)
+
+    </script>
+
+    <!-- End of Async Drift Code -->
+  </body>
+</html>
